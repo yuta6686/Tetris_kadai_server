@@ -3,6 +3,8 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
 #include <winsock.h>
+#include <signal.h>
+#include <fcntl.h>
 #pragma comment (lib, "Ws2_32.lib")
 
 int main()
@@ -65,6 +67,12 @@ int main()
 		WSACleanup();
 		return -3;
 	}
+
+	//	add
+	//	ノンブロッキング処理
+	u_long val = 1;
+	ioctlsocket(s, FIONBIO, &val);
+
 	while (1) {
 		fromlen = (int)sizeof(from);
 		nRtn = recvfrom(s,
@@ -73,19 +81,34 @@ int main()
 			0,
 			(SOCKADDR*)&from,
 			&fromlen);
-		if (nRtn == SOCKET_ERROR) {
+
+		//	add
+		if (nRtn < 1) {
+			if (errno == EAGAIN) {
+				printf("MADA KONAI\n");
+			}						
+		}
+		else {
+			printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);			
+			szBuf[nRtn] = '\0';
+		}
+
+		//	delete
+		/*if (nRtn == SOCKET_ERROR) {
 			perror(" recvform Error\n");
 			closesocket(s);
 			WSACleanup();
-			return -4;
-		}
-		szBuf[nRtn] = '\0';
+			return -4;			
+		}*/
+		
 
 		if (strcmp(szBuf, "end") == 0) {
 			printf(" Terminate Server\n");
 			break;
 		}
-		printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
+
+		//	add
+		//printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
 
 	}
 	closesocket(s);
