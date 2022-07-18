@@ -5,7 +5,10 @@
 #include <winsock.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <conio.h>
 #pragma comment (lib, "Ws2_32.lib")
+
+#define PORT_NUMBER 55555
 
 int main()
 {
@@ -21,10 +24,18 @@ int main()
 	u_short port;
 	char szBuf[256], szIP[256];
 
-	printf(" Enter Any Ephemeral Port Number(49152-65535): ");
-	gets_s(szBuf);
+	{
+		/*printf(" Enter Any Press: ");
+		gets_s(szBuf);*/
 
-	port = atoi(szBuf);
+		//	delete
+		/*gets_s(szBuf);
+
+		port = atoi(szBuf);*/
+	}
+
+	//	add
+	port = PORT_NUMBER;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		perror(" WSAStartup Error\n");
@@ -42,6 +53,7 @@ int main()
 	printf(" iMaxSockets: %d\n", wsaData.iMaxSockets);
 	printf(" iMaxUdpDg: %d\n", wsaData.iMaxUdpDg);
 	printf(" WSAStartup Succeeded\n");
+	printf(" PortNumber: %d\n", PORT_NUMBER);	//	add
 	gethostname(szBuf, (int)sizeof(szBuf));
 	printf("\n Host Name: %s\n", szBuf);
 	lpHost = gethostbyname(szBuf);
@@ -74,42 +86,69 @@ int main()
 	ioctlsocket(s, FIONBIO, &val);
 
 	while (1) {
-		fromlen = (int)sizeof(from);
-		nRtn = recvfrom(s,
-			szBuf,
-			(int)sizeof(szBuf) - 1,
-			0,
-			(SOCKADDR*)&from,
-			&fromlen);
+		//	recvfrom
+		{
+			fromlen = (int)sizeof(from);
+			nRtn = recvfrom(s,
+				szBuf,
+				(int)sizeof(szBuf) - 1,
+				0,
+				(SOCKADDR*)&from,
+				&fromlen);
 
-		//	add
-		if (nRtn < 1) {
-			if (errno == EAGAIN) {
-				printf("MADA KONAI\n");
-			}						
-		}
-		else {
-			printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);			
-			szBuf[nRtn] = '\0';
+			//	add
+			if (nRtn < 1) {
+				if (errno == EAGAIN) {
+					printf("MADA KONAI\n");
+				}
+			}
+			else 
+			{	//	Žó‚¯Žæ‚Á‚½‚ç‚±‚±
+				printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
+				
+
+				// send
+				{
+					nRtn = sendto(s, szBuf, (int)strlen(szBuf) + 1, 0,
+						(LPSOCKADDR)&from, sizeof(from));
+
+					if (nRtn != (int)strlen(szBuf) + 1) {
+						perror("Send Srror\n");
+						closesocket(s);
+						WSACleanup();
+						return -4;
+					}
+					if (strcmp(szBuf, "end") == 0) {
+						printf("I—¹‚µ‚Ü‚·\n");
+						_getch();
+						break;
+					}
+				}
+
+				szBuf[nRtn] = '\0';
+			}
+
+			if (strcmp(szBuf, "end") == 0) {
+				printf(" Terminate Server\n");
+				break;
+			}
 		}
 
 		//	delete
-		/*if (nRtn == SOCKET_ERROR) {
-			perror(" recvform Error\n");
-			closesocket(s);
-			WSACleanup();
-			return -4;			
-		}*/
-		
+		{
+			/*if (nRtn == SOCKET_ERROR) {
+				perror(" recvform Error\n");
+				closesocket(s);
+				WSACleanup();
+				return -4;
+			}*/
 
-		if (strcmp(szBuf, "end") == 0) {
-			printf(" Terminate Server\n");
-			break;
+			//	add
+			//printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
 		}
 
-		//	add
-		//printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
 
+		
 	}
 	closesocket(s);
 	WSACleanup();
