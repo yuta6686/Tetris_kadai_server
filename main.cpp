@@ -43,7 +43,7 @@
 #define WHITE			15
 
 #define BLOCK_SIZE		4
-#define BLOCK_TYPE		7
+#define BLOCK_TYPE		9
 #define EMPTY           -1
 #define PIECE0          DARK_RED
 #define PIECE1          DARK_GREEN
@@ -52,6 +52,7 @@
 #define PIECE4          DARK_MAGENTA
 #define PIECE5          DARK_CYAN
 #define PIECE6          LIGHT_GRAY
+#define PIECE7          LIGHT_CYAN
 #define PIECE_DEL       BLACK           // 削除中のピースの色
 
 // ブロック
@@ -104,6 +105,20 @@ int    Block_list[BLOCK_TYPE][BLOCK_SIZE][BLOCK_SIZE] = {
 		{  EMPTY, PIECE6, PIECE6,  EMPTY },     //   ■■
 		{  EMPTY, PIECE6,  EMPTY,  EMPTY },     //   ■
 		{  EMPTY,  EMPTY,  EMPTY,  EMPTY },     //   
+	},
+	// タイプ7ブロック(1型)
+	{
+		{  EMPTY,  EMPTY, EMPTY,  EMPTY },			//     
+		{  EMPTY, EMPTY, EMPTY,  EMPTY },			//   
+		{  PIECE7, EMPTY,  PIECE7,  EMPTY },			//   ■
+		{  PIECE7,  PIECE7,  PIECE7,  EMPTY },		//   
+	},
+	// タイプ8ブロック(十字型)
+	{
+		{  EMPTY,  EMPTY, EMPTY,  EMPTY },			//     
+		{  EMPTY, PIECE7, EMPTY,  EMPTY },			//   
+		{  PIECE7, PIECE7,  PIECE7,  EMPTY },			//   ■
+		{  EMPTY,  PIECE7,  EMPTY,  EMPTY },		//   
 	},
 };
 
