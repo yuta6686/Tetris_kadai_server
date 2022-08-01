@@ -1,5 +1,5 @@
 // udpserver.cpp
-
+#define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
 #include <winsock.h>
@@ -7,11 +7,13 @@
 #include <fcntl.h>
 #include <conio.h>
 #include <time.h>
+#include <string>
+using namespace std;
 #pragma comment (lib, "Ws2_32.lib")
 
 #define PORT_NUMBER 55555
 
-  // マクロ定義
+// マクロ定義
 #define FIELD_H         20      // フィールドの高さ
 #define FIELD_W         10      // フィールドの幅
 #define FIELD_X         5       // フィールド表示桁位置
@@ -43,7 +45,7 @@
 #define WHITE			15
 
 #define BLOCK_SIZE		4
-#define BLOCK_TYPE		7
+#define BLOCK_TYPE		9
 #define EMPTY           -1
 #define PIECE0          DARK_RED
 #define PIECE1          DARK_GREEN
@@ -52,6 +54,7 @@
 #define PIECE4          DARK_MAGENTA
 #define PIECE5          DARK_CYAN
 #define PIECE6          LIGHT_GRAY
+#define PIECE7          LIGHT_CYAN
 #define PIECE_DEL       BLACK           // 削除中のピースの色
 
 // ブロック
@@ -105,6 +108,20 @@ int    Block_list[BLOCK_TYPE][BLOCK_SIZE][BLOCK_SIZE] = {
 		{  EMPTY, PIECE6,  EMPTY,  EMPTY },     //   ■
 		{  EMPTY,  EMPTY,  EMPTY,  EMPTY },     //   
 	},
+	// タイプ7ブロック(1型)
+	{
+		{  EMPTY,  EMPTY, EMPTY,  EMPTY },			//     
+		{  EMPTY, EMPTY, EMPTY,  EMPTY },			//   
+		{  PIECE7, EMPTY,  PIECE7,  EMPTY },			//   ■
+		{  PIECE7,  PIECE7,  PIECE7,  EMPTY },		//   
+	},
+	// タイプ8ブロック(十字型)
+	{
+		{  EMPTY,  EMPTY, EMPTY,  EMPTY },			//     
+		{  EMPTY, PIECE7, EMPTY,  EMPTY },			//   
+		{  PIECE7, PIECE7,  PIECE7,  EMPTY },			//   ■
+		{  EMPTY,  PIECE7,  EMPTY,  EMPTY },		//   
+	},
 };
 
 int     Field[FIELD_H][FIELD_W];        // フィールド
@@ -144,12 +161,13 @@ SOCKADDR_IN from;
 int fromlen;
 int nRtn;
 u_short port;
-char szBuf[256], szIP[256];
+char szBuf[2048], szIP[256];
+
 
 int main()
 {
-	
-	
+
+
 
 	{
 		/*printf(" Enter Any Press: ");
@@ -239,10 +257,10 @@ int main()
 					printf("MADA KONAI\n");
 				}
 			}
-			else 
+			else
 			{	//	受け取ったらここ
-				printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
-				
+				//printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
+
 				//	処理する場所
 				{
 					if (!operate_block()) {
@@ -253,20 +271,33 @@ int main()
 				print_field();      // フィールドの表示
 				print_block();      // アクティブブロックの表示
 
-				
+				string str;
+				for (int i = 0; i < FIELD_H * FIELD_W; i++) {
+					char buff[4];
+					sprintf(buff, "%d,", Field[i / 10][i % 10]);
+					str += buff;
+				}
+				for (int i = 0; i < 4 * 4; i++) {
+					char buff[4];
+					sprintf(buff, "%d,", Block[i / 4][i % 4]);
+					str += buff;
+				}
+				char buff_block[8];
+				sprintf(buff_block, "%d,%d,", Block_X, Block_Y);
+				str += buff_block;
 
 				// send
 				{
-					nRtn = sendto(s, szBuf, (int)strlen(szBuf) + 1, 0,
+					nRtn = sendto(s, str.c_str(), (int)strlen(str.c_str()) + 1, 0,
 						(LPSOCKADDR)&from, sizeof(from));
 
-					if (nRtn != (int)strlen(szBuf) + 1) {
+					if (nRtn != (int)strlen(str.c_str()) + 1) {
 						perror("Send Srror\n");
 						closesocket(s);
 						WSACleanup();
 						return -4;
 					}
-					if (strcmp(szBuf, "end") == 0) {
+					if (strcmp(str.c_str(), "end") == 0) {
 						printf("終了します\n");
 						_getch();
 						break;
@@ -282,7 +313,7 @@ int main()
 			}
 		}
 
-		
+
 
 		//	delete
 		{
@@ -295,7 +326,7 @@ int main()
 
 			//	add
 			//printf("%s>%s\n", inet_ntoa(from.sin_addr), szBuf);
-		}		
+		}
 	}
 
 	print_end();            // ゲームステータスに応じた終了メッセージを表示
@@ -494,7 +525,7 @@ bool operate_block(void)
 	// 入力促進メッセージ表示とキー入力
 	set_cursor_pos(1, FIELD_Y + FIELD_H + 2);
 	printf("a(←),s(↓),d(→),x(回転),スペース(高速落下),*(終了) ");
-	
+
 
 	switch (szBuf[0]) {
 	case '*':   // 終了
